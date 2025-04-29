@@ -1,0 +1,65 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Stele
+    network: base
+    source:
+      address: "0xee6d8537C2300305e3c3B40d7E23D40205F19484"
+      abi: Stele
+      startBlock: 29485812
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AddToken
+        - Claim
+        - Create
+        - DebugJoin
+        - DebugTokenPrice
+        - EntryFee
+        - Join
+        - MaxAssets
+        - OwnershipTransferred
+        - Register
+        - RemoveToken
+        - RewardRatio
+        - SeedMoney
+        - Swap
+      abis:
+        - name: Stele
+          file: ./abis/Stele.json
+      eventHandlers:
+        - event: AddToken(address)
+          handler: handleAddToken
+        - event: Claim(uint256,address,uint256)
+          handler: handleClaim
+        - event: Create(uint256,uint8,uint256,uint256)
+          handler: handleCreate
+        - event: DebugJoin(address,uint256,uint256)
+          handler: handleDebugJoin
+        - event: DebugTokenPrice(address,uint128,address,uint256)
+          handler: handleDebugTokenPrice
+        - event: EntryFee(uint256)
+          handler: handleEntryFee
+        - event: Join(uint256,address)
+          handler: handleJoin
+        - event: MaxAssets(uint8)
+          handler: handleMaxAssets
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Register(uint256,address,uint256)
+          handler: handleRegister
+        - event: RemoveToken(address)
+          handler: handleRemoveToken
+        - event: RewardRatio(uint256[5])
+          handler: handleRewardRatio
+        - event: SeedMoney(uint256)
+          handler: handleSeedMoney
+        - event: Swap(uint256,address,address,address,uint256,uint256,uint256,uint256)
+          handler: handleSwap
+      file: ./src/stele.ts
