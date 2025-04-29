@@ -17,49 +17,43 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - AddToken
-        - Claim
-        - Create
-        - DebugJoin
-        - DebugTokenPrice
-        - EntryFee
-        - Join
-        - MaxAssets
-        - OwnershipTransferred
-        - Register
         - RemoveToken
         - RewardRatio
         - SeedMoney
+        - EntryFee
+        - MaxAssets
+        - OwnershipTransferred
+        - Create
+        - Join
         - Swap
+        - Register
+        - Claim
       abis:
         - name: Stele
           file: ./abis/Stele.json
       eventHandlers:
         - event: AddToken(address)
           handler: handleAddToken
-        - event: Claim(uint256,address,uint256)
-          handler: handleClaim
-        - event: Create(uint256,uint8,uint256,uint256)
-          handler: handleCreate
-        - event: DebugJoin(address,uint256,uint256)
-          handler: handleDebugJoin
-        - event: DebugTokenPrice(address,uint128,address,uint256)
-          handler: handleDebugTokenPrice
-        - event: EntryFee(uint256)
-          handler: handleEntryFee
-        - event: Join(uint256,address)
-          handler: handleJoin
-        - event: MaxAssets(uint8)
-          handler: handleMaxAssets
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
-        - event: Register(uint256,address,uint256)
-          handler: handleRegister
         - event: RemoveToken(address)
           handler: handleRemoveToken
         - event: RewardRatio(uint256[5])
           handler: handleRewardRatio
         - event: SeedMoney(uint256)
           handler: handleSeedMoney
+        - event: EntryFee(uint256)
+          handler: handleEntryFee
+        - event: MaxAssets(uint8)
+          handler: handleMaxAssets
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Create(uint256,uint8,uint256,uint256)
+          handler: handleCreate
+        - event: Join(uint256,address)
+          handler: handleJoin
         - event: Swap(uint256,address,address,address,uint256,uint256,uint256,uint256)
           handler: handleSwap
+        - event: Register(uint256,address,uint256)
+          handler: handleRegister
+        - event: Claim(uint256,address,uint256)
+          handler: handleClaim
       file: ./src/stele.ts
