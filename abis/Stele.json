@@ -1,7 +1,11 @@
 [
   {
     "inputs": [
-      { "internalType": "address", "name": "_usdToken", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "_usdToken",
+        "type": "address"
+      }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
@@ -30,31 +34,6 @@
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Claim",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "challengeId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
         "internalType": "enum ChallengeType",
         "name": "challengeType",
         "type": "uint8"
@@ -62,13 +41,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "startTime",
+        "name": "seedMoney",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "endTime",
+        "name": "entryFee",
         "type": "uint256"
       }
     ],
@@ -238,8 +217,33 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "challengeId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rewardAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Reward",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint256[5]",
-        "name": "newRewardDistribution",
+        "name": "newRewardRatio",
         "type": "uint256[5]"
       }
     ],
@@ -257,6 +261,49 @@
       }
     ],
     "name": "SeedMoney",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "usdToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "maxAssets",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "seedMoney",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "entryFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[5]",
+        "name": "rewardRatio",
+        "type": "uint256[5]"
+      }
+    ],
+    "name": "SteleCreated",
     "type": "event"
   },
   {
@@ -295,18 +342,6 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "fromPriceUSD",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "toPriceUSD",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
         "name": "toAmount",
         "type": "uint256"
       }
@@ -317,36 +352,74 @@
   {
     "inputs": [],
     "name": "WETH",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "challengeCounter",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "name": "challenges",
     "outputs": [
-      { "internalType": "uint256", "name": "id", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
       {
         "internalType": "enum ChallengeType",
         "name": "challengeType",
         "type": "uint8"
       },
-      { "internalType": "uint256", "name": "startTime", "type": "uint256" },
-      { "internalType": "uint256", "name": "endTime", "type": "uint256" },
-      { "internalType": "uint256", "name": "totalRewards", "type": "uint256" },
-      { "internalType": "uint256", "name": "seedMoney", "type": "uint256" },
-      { "internalType": "address", "name": "usdToken", "type": "address" },
-      { "internalType": "uint8", "name": "usdTokenDecimals", "type": "uint8" },
-      { "internalType": "uint8", "name": "maxAssets", "type": "uint8" },
-      { "internalType": "address", "name": "creator", "type": "address" },
-      { "internalType": "uint256", "name": "entryFee", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "startTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "seedMoney",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "entryFee",
+        "type": "uint256"
+      }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -367,13 +440,23 @@
   {
     "inputs": [],
     "name": "entryFee",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "challengeId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "challengeId",
+        "type": "uint256"
+      }
     ],
     "name": "getRewards",
     "outputs": [],
@@ -382,25 +465,59 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "baseToken", "type": "address" },
-      { "internalType": "uint128", "name": "baseAmount", "type": "uint128" },
-      { "internalType": "address", "name": "quoteToken", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "baseToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint128",
+        "name": "baseAmount",
+        "type": "uint128"
+      },
+      {
+        "internalType": "address",
+        "name": "quoteToken",
+        "type": "address"
+      }
     ],
     "name": "getTokenPrice",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "isInvestable",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "challengeId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "challengeId",
+        "type": "uint256"
+      }
     ],
     "name": "joinChallenge",
     "outputs": [],
@@ -409,30 +526,56 @@
   },
   {
     "inputs": [
-      { "internalType": "enum ChallengeType", "name": "", "type": "uint8" }
+      {
+        "internalType": "enum ChallengeType",
+        "name": "",
+        "type": "uint8"
+      }
     ],
     "name": "latestChallengesByType",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "maxAssets",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "owner",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "challengeId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "challengeId",
+        "type": "uint256"
+      }
     ],
     "name": "register",
     "outputs": [],
@@ -441,7 +584,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "tokenAddress", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
     ],
     "name": "resetToken",
     "outputs": [],
@@ -449,22 +596,44 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "name": "rewardDistribution",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "rewardRatio",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "seedMoney",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "_entryFee", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "_entryFee",
+        "type": "uint256"
+      }
     ],
     "name": "setEntryFee",
     "outputs": [],
@@ -475,7 +644,7 @@
     "inputs": [
       {
         "internalType": "uint256[5]",
-        "name": "_rewardDistribution",
+        "name": "_rewardRatio",
         "type": "uint256[5]"
       }
     ],
@@ -486,7 +655,11 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "_seedMoney", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "_seedMoney",
+        "type": "uint256"
+      }
     ],
     "name": "setSeedMoney",
     "outputs": [],
@@ -495,7 +668,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "tokenAddress", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
     ],
     "name": "setToken",
     "outputs": [],
@@ -504,7 +681,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "_usdToken", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "_usdToken",
+        "type": "address"
+      }
     ],
     "name": "setUSDToken",
     "outputs": [],
@@ -513,10 +694,26 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "challengeId", "type": "uint256" },
-      { "internalType": "address", "name": "from", "type": "address" },
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "challengeId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "swap",
     "outputs": [],
@@ -525,7 +722,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "newOwner", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
     ],
     "name": "transferOwnership",
     "outputs": [],
@@ -535,21 +736,39 @@
   {
     "inputs": [],
     "name": "uniswapV3Factory",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "usdToken",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "usdTokenDecimals",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   }
