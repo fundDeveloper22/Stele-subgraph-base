@@ -27,11 +27,19 @@ dataSources:
         - Join
         - Swap
         - Register
-        - Claim
+        - Reward
       abis:
         - name: Stele
           file: ./abis/Stele.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV3Factory
+          file: ./abis/UniswapV3Factory.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       eventHandlers:
+        - event: SteleCreated(address,address,uint8,uint256,uint256,uint256[5])
+          handler: handleSteleCreated
         - event: AddToken(address)
           handler: handleAddToken
         - event: RemoveToken(address)
@@ -50,10 +58,10 @@ dataSources:
           handler: handleCreate
         - event: Join(uint256,address)
           handler: handleJoin
-        - event: Swap(uint256,address,address,address,uint256,uint256,uint256,uint256)
+        - event: Swap(uint256,address,address,address,uint256,uint256)
           handler: handleSwap
         - event: Register(uint256,address,uint256)
           handler: handleRegister
-        - event: Claim(uint256,address,uint256)
-          handler: handleClaim
+        - event: Reward(uint256,address,uint256)
+          handler: handleReward
       file: ./src/stele.ts
