@@ -8,7 +8,7 @@
   maxAssets: Int! # uint8
   challengeCounter: BigInt! # uint256
   investorCounter: BigInt! # uint256
-  totalCurrentUSD: BigDecimal! # uint256
+  totalRewardUSD: BigDecimal! # uint256
 }
 
 type Challenge @entity(immutable: false) {
@@ -33,13 +33,12 @@ type Investor @entity(immutable: false) {
   createdAtTimestamp: BigInt!
   updatedAtTimestamp: BigInt!
   investor: Bytes!
-  principalUSD: BigDecimal!
+  seedMoneyUSD: BigDecimal!
   currentUSD: BigDecimal!
   tokens: [Bytes!]!
   tokensAmount: [BigDecimal!]!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
-  rank: Int!
 }
 
 type Token @entity(immutable: false) {
@@ -64,6 +63,7 @@ type Join @entity(immutable: true) {
   id: Bytes!
   challengeId: BigInt! # uint256
   user: Bytes! # address
+  seedMoney: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -105,7 +105,8 @@ type Reward @entity(immutable: true) {
 }
 
 type SteleSnapshot @entity(immutable: true) {
-  id: Bytes!
+  id: ID!
+  date: Int!
   rewardRatio: [BigInt!]!
   seedMoney: BigInt!
   entryFee: BigInt!
@@ -113,7 +114,7 @@ type SteleSnapshot @entity(immutable: true) {
   owner: Bytes!
   challengeCounter: BigInt!
   investorCounter: BigInt!
-  totalCurrentUSD: BigDecimal!
+  totalRewardUSD: BigDecimal!
 }
 
 type ChallengeSnapshot @entity(immutable: true) {
@@ -132,7 +133,7 @@ type InvestorSnapshot @entity(immutable: true) {
   challengeId: String!
   timestamp: BigInt!
   investor: Bytes!
-  principalUSD: BigDecimal!
+  seedMoneyUSD: BigDecimal!
   currentUSD: BigDecimal!
   tokens: [Bytes!]!
   tokensAmount: [BigDecimal!]!

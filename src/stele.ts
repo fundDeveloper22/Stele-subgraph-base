@@ -21,11 +21,15 @@ import {
   Swap,
   Token,
   Stele,
-  Challenge
+  Challenge,
+  SteleSnapshot,
+  ChallengeSnapshot,
+  Investor
 } from "../generated/schema"
 import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts"
 import { getDuration, STELE_ADDRESS } from "./utils/constants"
 import { ERC20 } from "../generated/Stele/ERC20"
+import { steleSnapshot, challengeSnapshot, investorSnapshot } from "./utils/snapshots"
 
 function fetchTokenDecimals(tokenAddress: Bytes): BigInt | null {
   let contract = ERC20.bind(Address.fromBytes(tokenAddress))
@@ -46,19 +50,19 @@ function fetchTokenSymbol(tokenAddress: Bytes): string {
 }
 
 export function handleSteleCreated(event: SteleCreatedEvent): void {
-  let entity = new Stele(Bytes.fromHexString(STELE_ADDRESS))
+  let stele = new Stele(Bytes.fromHexString(STELE_ADDRESS))
 
-  entity.owner = event.params.owner
-  entity.usdToken = event.params.usdToken
-  entity.rewardRatio = event.params.rewardRatio
-  entity.seedMoney = event.params.seedMoney
-  entity.entryFee = event.params.entryFee
-  entity.maxAssets = event.params.maxAssets
-  entity.challengeCounter= BigInt.fromI32(0)
-  entity.investorCounter = BigInt.fromI32(0)
-  entity.totalCurrentUSD = BigDecimal.fromString("0")
+  stele.owner = event.params.owner
+  stele.usdToken = event.params.usdToken
+  stele.rewardRatio = event.params.rewardRatio
+  stele.seedMoney = event.params.seedMoney
+  stele.entryFee = event.params.entryFee
+  stele.maxAssets = event.params.maxAssets
+  stele.challengeCounter= BigInt.fromI32(0)
+  stele.investorCounter = BigInt.fromI32(0)
+  stele.totalRewardUSD = BigDecimal.fromString("0")
 
-  entity.save()
+  stele.save()
 }
 
 export function handleAddToken(event: AddTokenEvent): void {
@@ -85,11 +89,11 @@ export function handleAddToken(event: AddTokenEvent): void {
 }
 
 export function handleRemoveToken(event: RemoveTokenEvent): void {
-  let entity = Token.load(event.params.tokenAddress)
-  if (entity != null) {
-    entity.isInvestable = false
-    entity.updatedTimestamp = event.block.timestamp
-    entity.save()
+  let token = Token.load(event.params.tokenAddress)
+  if (token != null) {
+    token.isInvestable = false
+    token.updatedTimestamp = event.block.timestamp
+    token.save()
   }
 }
 
@@ -136,9 +140,7 @@ export function handleOwnershipTransferred(
 }
 
 export function handleCreate(event: CreateEvent): void {
-  let create = new Create(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
+  let create = new Create(event.transaction.hash)
   create.challengeId = event.params.challengeId
   create.challengeType = event.params.challengeType
   create.blockNumber = event.block.number
@@ -146,82 +148,154 @@ export function handleCreate(event: CreateEvent): void {
   create.transactionHash = event.transaction.hash
   create.save()
 
+  let timestamp = event.block.timestamp.toI32()
+  let dayID = timestamp / 86400 // rounded
+  
+  // create stele snapshot
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele == null) {
+    log.debug('[CREATE] Stele not found, Stele : {}', [STELE_ADDRESS])
+    return
+  }
+  stele.challengeCounter = stele.challengeCounter.plus(BigInt.fromI32(1))
+  stele.save()
+
+  let steleSnapshot = SteleSnapshot.load(dayID.toString())
+  if (steleSnapshot === null) {
+    steleSnapshot = new SteleSnapshot(dayID.toString())
+  }
+  steleSnapshot.rewardRatio = stele.rewardRatio
+  steleSnapshot.seedMoney = stele.seedMoney
+  steleSnapshot.entryFee = stele.entryFee
+  steleSnapshot.maxAssets = stele.maxAssets
+  steleSnapshot.owner = stele.owner
+  steleSnapshot.challengeCounter = stele.challengeCounter
+  steleSnapshot.investorCounter = stele.investorCounter
+  steleSnapshot.totalRewardUSD = stele.totalRewardUSD
+  steleSnapshot.save()
+
+  // Create challenge and challenge snapshot
   let challenge = new Challenge(
-    event.transaction.hash.toHexString()
+    event.params.challengeId.toString()
   )
   challenge.challengeId = event.params.challengeId.toString()
   challenge.challengeType = create.challengeType
   challenge.startTime = event.block.timestamp
   challenge.endTime = challenge.startTime.plus(getDuration(event.params.challengeType))
   challenge.investorCounter = BigInt.fromI32(0)
-
-  //TODO : get seedMoney and entryFee from stele contract
-  challenge.seedMoney = BigInt.fromI32(0)
-  challenge.entryFee = BigInt.fromI32(0)
+  challenge.seedMoney = event.params.seedMoney
+  challenge.entryFee = event.params.entryFee
   challenge.rewardAmountUSD = BigInt.fromI32(0)
   challenge.isActive = true
   challenge.topUsers = []
   challenge.score = []
   challenge.save()
+
+  let challengeSnapshot = ChallengeSnapshot.load(event.params.challengeId.toString() + "-" + dayID.toString())
+  if (challengeSnapshot == null) {
+    challengeSnapshot = new ChallengeSnapshot(event.params.challengeId.toString() + "-" + dayID.toString())
+  }
+  challengeSnapshot.challengeId = event.params.challengeId.toString()
+  challengeSnapshot.timestamp = event.block.timestamp
+  challengeSnapshot.investorCount = BigInt.fromI32(0)
+  challengeSnapshot.rewardAmountUSD = BigInt.fromI32(0)
+  challengeSnapshot.topUsers = []
+  challengeSnapshot.score = []
+  challengeSnapshot.save()
 }
 
 export function handleJoin(event: JoinEvent): void {
-  let entity = new Join(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+  let join = new Join(event.transaction.hash)
+  join.challengeId = event.params.challengeId
+  join.user = event.params.user
+  join.seedMoney = event.params.seedMoney
+  join.blockNumber = event.block.number
+  join.blockTimestamp = event.block.timestamp
+  join.transactionHash = event.transaction.hash
+  join.save()
+
+  // Update Stele and create SteleSnapshot
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele == null) {
+    log.debug('[JOIN] Stele not found, Stele : {}', [STELE_ADDRESS])
+    return
+  }
+  stele.investorCounter = stele.investorCounter.plus(BigInt.fromI32(1))
+  stele.save()
+  steleSnapshot(event)
+
+  // Update Challenge and create ChallengeSnapshot
+  let challenge = Challenge.load(event.params.challengeId.toString())
+  if (challenge == null) {
+    log.debug('[JOIN] Challenge not found, Challenge : {}', [event.params.challengeId.toString()])
+    return
+  }
+  challenge.investorCounter = challenge.investorCounter.plus(BigInt.fromI32(1))
+  challenge.save()
+  challengeSnapshot(event.params.challengeId.toString(), event)
+
+  // Create new Investor and InvestorSnapshot
+  let investor = new Investor(
+    event.params.challengeId.toString() + "-" + event.params.user.toHexString()
   )
-  entity.challengeId = event.params.challengeId
-  entity.user = event.params.user
+  investor.challengeId = event.params.challengeId.toString()
+  investor.createdAtTimestamp = event.block.timestamp
+  investor.updatedAtTimestamp = event.block.timestamp
+  investor.investor = event.params.user
+  investor.seedMoneyUSD = BigDecimal.fromString(event.params.seedMoney.toString())
+  investor.currentUSD = BigDecimal.fromString("0")
+  investor.tokens = [stele.usdToken]
+  
+  let usdTokenContract = ERC20.bind(Address.fromBytes(stele.usdToken))
+  let decimalsResult = usdTokenContract.try_decimals()
+  if (!decimalsResult.reverted) {
+    let decimals = decimalsResult.value as u8
+    let seedMoneyWithDecimals = event.params.seedMoney.times(BigInt.fromI32(10).pow(decimals))
+    investor.tokensAmount = [BigDecimal.fromString(seedMoneyWithDecimals.toString())]
+  } else {
+    log.debug('[JOIN] Failed to get decimals for USD token: {}', [stele.usdToken.toHexString()])
+    investor.tokensAmount = [BigDecimal.fromString("0")]
+  }
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  investor.profitUSD = investor.currentUSD.minus(investor.seedMoneyUSD)
+  investor.profitRatio = investor.profitUSD.div(investor.seedMoneyUSD)
+  investor.save()
 
-  entity.save()
+  investorSnapshot(event.params.challengeId, event.params.user, event)
 }
 
 export function handleSwap(event: SwapEvent): void {
-  let entity = new Swap(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.challengeId = event.params.challengeId
-  entity.user = event.params.user
-  entity.fromAsset = event.params.fromAsset
-  entity.toAsset = event.params.toAsset
-  entity.fromAmount = event.params.fromAmount
-  entity.toAmount = event.params.toAmount
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let swap = new Swap(event.transaction.hash)
+  swap.challengeId = event.params.challengeId
+  swap.user = event.params.user
+  swap.fromAsset = event.params.fromAsset
+  swap.toAsset = event.params.toAsset
+  swap.fromAmount = event.params.fromAmount
+  swap.toAmount = event.params.toAmount
+  swap.blockNumber = event.block.number
+  swap.blockTimestamp = event.block.timestamp
+  swap.transactionHash = event.transaction.hash
+  swap.save()
 }
 
 export function handleRegister(event: RegisterEvent): void {
-  let entity = new Register(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.challengeId = event.params.challengeId
-  entity.user = event.params.user
-  entity.performance = event.params.performance
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let register = new Register(event.transaction.hash)
+  register.challengeId = event.params.challengeId
+  register.user = event.params.user
+  register.performance = event.params.performance
+  register.blockNumber = event.block.number
+  register.blockTimestamp = event.block.timestamp
+  register.transactionHash = event.transaction.hash
+  register.save()
 }
 
 export function handleReward(event: RewardEvent): void {
-  let entity = new Reward(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.challengeId = event.params.challengeId
-  entity.user = event.params.user
-  entity.rewardAmount = event.params.rewardAmount
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let reward = new Reward(event.transaction.hash)
+  reward.challengeId = event.params.challengeId
+  reward.user = event.params.user
+  reward.rewardAmount = event.params.rewardAmount
+  reward.blockNumber = event.block.number
+  reward.blockTimestamp = event.block.timestamp
+  reward.transactionHash = event.transaction.hash
+  reward.save()
 }

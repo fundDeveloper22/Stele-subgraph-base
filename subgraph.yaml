@@ -56,7 +56,7 @@ dataSources:
           handler: handleOwnershipTransferred
         - event: Create(uint256,uint8,uint256,uint256)
           handler: handleCreate
-        - event: Join(uint256,address)
+        - event: Join(uint256,address,uint256)
           handler: handleJoin
         - event: Swap(uint256,address,address,address,uint256,uint256)
           handler: handleSwap
