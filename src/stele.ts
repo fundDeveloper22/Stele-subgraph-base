@@ -1,9 +1,7 @@
 import {
   AddToken as AddTokenEvent,
-  Claim as ClaimEvent,
+  Reward as RewardEvent,
   Create as CreateEvent,
-  DebugJoin as DebugJoinEvent,
-  DebugTokenPrice as DebugTokenPriceEvent,
   EntryFee as EntryFeeEvent,
   Join as JoinEvent,
   MaxAssets as MaxAssetsEvent,
@@ -12,131 +10,159 @@ import {
   RemoveToken as RemoveTokenEvent,
   RewardRatio as RewardRatioEvent,
   SeedMoney as SeedMoneyEvent,
-  Swap as SwapEvent
+  Swap as SwapEvent,
+  SteleCreated as SteleCreatedEvent
 } from "../generated/Stele/Stele"
 import {
-  AddToken,
-  Claim,
+  Reward,
   Create,
-  EntryFee,
   Join,
-  MaxAssets,
-  OwnershipTransferred,
   Register,
-  RemoveToken,
-  RewardRatio,
-  SeedMoney,
-  Swap
+  Swap,
+  Token,
+  Stele,
+  Challenge
 } from "../generated/schema"
+import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts"
+import { getDuration, STELE_ADDRESS } from "./utils/constants"
+import { ERC20 } from "../generated/Stele/ERC20"
 
-export function handleAddToken(event: AddTokenEvent): void {
-  let entity = new AddToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.tokenAddress = event.params.tokenAddress
+function fetchTokenDecimals(tokenAddress: Bytes): BigInt | null {
+  let contract = ERC20.bind(Address.fromBytes(tokenAddress))
+  let decimalsResult = contract.try_decimals()
+  if (!decimalsResult.reverted) {
+    return BigInt.fromI32(decimalsResult.value)
+  }
+  return null
+}
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+function fetchTokenSymbol(tokenAddress: Bytes): string {
+  let contract = ERC20.bind(Address.fromBytes(tokenAddress))
+  let symbolResult = contract.try_symbol()
+  if (!symbolResult.reverted) {
+    return symbolResult.value
+  }
+  return "UNKNOWN"
+}
+
+export function handleSteleCreated(event: SteleCreatedEvent): void {
+  let entity = new Stele(Bytes.fromHexString(STELE_ADDRESS))
+
+  entity.owner = event.params.owner
+  entity.usdToken = event.params.usdToken
+  entity.rewardRatio = event.params.rewardRatio
+  entity.seedMoney = event.params.seedMoney
+  entity.entryFee = event.params.entryFee
+  entity.maxAssets = event.params.maxAssets
+  entity.challengeCounter= BigInt.fromI32(0)
+  entity.investorCounter = BigInt.fromI32(0)
+  entity.totalCurrentUSD = BigDecimal.fromString("0")
 
   entity.save()
+}
+
+export function handleAddToken(event: AddTokenEvent): void {
+  let token = Token.load(event.params.tokenAddress)
+  if (!token) {
+    token = new Token(event.params.tokenAddress)
+    token.tokenAddress = event.params.tokenAddress
+    
+    let decimals = fetchTokenDecimals(event.params.tokenAddress)
+    if (decimals === null) {
+      log.debug('the decimals on {} token was null', [event.params.tokenAddress.toHexString()])
+      return
+    }
+    token.decimals = decimals
+    token.symbol = fetchTokenSymbol(event.params.tokenAddress)
+    token.isInvestable = true
+    token.updatedTimestamp = event.block.timestamp
+    token.save()
+  } else {
+    token.isInvestable = true
+    token.updatedTimestamp = event.block.timestamp
+    token.save()
+  }
 }
 
 export function handleRemoveToken(event: RemoveTokenEvent): void {
-  let entity = new RemoveToken(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.tokenAddress = event.params.tokenAddress
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let entity = Token.load(event.params.tokenAddress)
+  if (entity != null) {
+    entity.isInvestable = false
+    entity.updatedTimestamp = event.block.timestamp
+    entity.save()
+  }
 }
 
 export function handleRewardRatio(event: RewardRatioEvent): void {
-  let entity = new RewardRatio(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.newRewardDistribution = event.params.newRewardDistribution
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele != null) {
+    stele.rewardRatio = event.params.newRewardRatio
+    stele.save()
+  }
 }
 
 export function handleSeedMoney(event: SeedMoneyEvent): void {
-  let entity = new SeedMoney(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.newSeedMoney = event.params.newSeedMoney
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele != null) {
+    stele.seedMoney = event.params.newSeedMoney
+    stele.save()
+  }
 }
 
 export function handleEntryFee(event: EntryFeeEvent): void {
-  let entity = new EntryFee(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.newEntryFee = event.params.newEntryFee
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele != null) {
+    stele.entryFee = event.params.newEntryFee
+    stele.save()
+  }
 }
 
 export function handleMaxAssets(event: MaxAssetsEvent): void {
-  let entity = new MaxAssets(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.newMaxAssets = event.params.newMaxAssets
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele != null) {
+    stele.maxAssets = event.params.newMaxAssets
+    stele.save()
+  }
 }
 
 export function handleOwnershipTransferred(
   event: OwnershipTransferredEvent
 ): void {
-  let entity = new OwnershipTransferred(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.previousOwner = event.params.previousOwner
-  entity.newOwner = event.params.newOwner
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
+  let stele = Stele.load(Bytes.fromHexString(STELE_ADDRESS))
+  if (stele != null) {
+    stele.owner = event.params.newOwner
+    stele.save()
+  }
 }
 
 export function handleCreate(event: CreateEvent): void {
-  let entity = new Create(
+  let create = new Create(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
-  entity.challengeId = event.params.challengeId
-  entity.challengeType = event.params.challengeType
-  entity.startTime = event.params.startTime
-  entity.endTime = event.params.endTime
+  create.challengeId = event.params.challengeId
+  create.challengeType = event.params.challengeType
+  create.blockNumber = event.block.number
+  create.blockTimestamp = event.block.timestamp
+  create.transactionHash = event.transaction.hash
+  create.save()
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  let challenge = new Challenge(
+    event.transaction.hash.toHexString()
+  )
+  challenge.challengeId = event.params.challengeId.toString()
+  challenge.challengeType = create.challengeType
+  challenge.startTime = event.block.timestamp
+  challenge.endTime = challenge.startTime.plus(getDuration(event.params.challengeType))
+  challenge.investorCounter = BigInt.fromI32(0)
 
-  entity.save()
+  //TODO : get seedMoney and entryFee from stele contract
+  challenge.seedMoney = BigInt.fromI32(0)
+  challenge.entryFee = BigInt.fromI32(0)
+  challenge.rewardAmountUSD = BigInt.fromI32(0)
+  challenge.isActive = true
+  challenge.topUsers = []
+  challenge.score = []
+  challenge.save()
 }
 
 export function handleJoin(event: JoinEvent): void {
@@ -162,10 +188,7 @@ export function handleSwap(event: SwapEvent): void {
   entity.fromAsset = event.params.fromAsset
   entity.toAsset = event.params.toAsset
   entity.fromAmount = event.params.fromAmount
-  entity.fromPriceUSD = event.params.fromPriceUSD
-  entity.toPriceUSD = event.params.toPriceUSD
   entity.toAmount = event.params.toAmount
-
   entity.blockNumber = event.block.number
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
@@ -188,8 +211,8 @@ export function handleRegister(event: RegisterEvent): void {
   entity.save()
 }
 
-export function handleClaim(event: ClaimEvent): void {
-  let entity = new Claim(
+export function handleReward(event: RewardEvent): void {
+  let entity = new Reward(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.challengeId = event.params.challengeId
