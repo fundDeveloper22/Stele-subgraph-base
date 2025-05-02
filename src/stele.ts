@@ -11,7 +11,8 @@ import {
   RewardRatio as RewardRatioEvent,
   SeedMoney as SeedMoneyEvent,
   Swap as SwapEvent,
-  SteleCreated as SteleCreatedEvent
+  SteleCreated as SteleCreatedEvent,
+  Stele as SteleContract
 } from "../generated/Stele/Stele"
 import {
   Reward,
@@ -30,6 +31,8 @@ import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts
 import { getDuration, STELE_ADDRESS } from "./utils/constants"
 import { ERC20 } from "../generated/Stele/ERC20"
 import { steleSnapshot, challengeSnapshot, investorSnapshot } from "./utils/snapshots"
+import { getEthPriceInUSD, getTokenPriceETH } from "./utils/pricing"
+import { exponentToBigDecimal } from "./utils/index"
 
 function fetchTokenDecimals(tokenAddress: Bytes): BigInt | null {
   let contract = ERC20.bind(Address.fromBytes(tokenAddress))
@@ -276,6 +279,63 @@ export function handleSwap(event: SwapEvent): void {
   swap.blockTimestamp = event.block.timestamp
   swap.transactionHash = event.transaction.hash
   swap.save()
+
+  // Update Investor and create investorSnapshot
+  let investor = Investor.load(event.params.challengeId.toString() + "-" + event.params.user.toHexString())
+  if (investor == null) {
+    log.debug('[SWAP] Investor not found, Investor : {}', [event.params.challengeId.toString() + "-" + event.params.user.toHexString()])
+    return
+  }
+  investor.updatedAtTimestamp = event.block.timestamp
+  // get tokens data from getUserPortfolio function
+  let steleContract = SteleContract.bind(Address.fromBytes(Bytes.fromHexString(STELE_ADDRESS)))
+  let tokenAddresses: Bytes[] = []
+  let tokensAmount: BigDecimal[] = []
+  let result = steleContract.getUserPortfolio(event.params.challengeId, event.params.user)
+  tokenAddresses = result.value0.map<Bytes>(addr => Bytes.fromHexString(addr.toHexString()))
+  tokensAmount = result.value1.map<BigDecimal>(amount => BigDecimal.fromString(amount.toString()))
+
+  let ethPriceInUSD = getEthPriceInUSD()
+
+  let tokensDeAmount: BigDecimal[] = []
+  for (let i = 0; i < tokenAddresses.length; i++) {
+    let token = tokenAddresses[i]
+    let amount = tokensAmount[i]
+    let deAmount = BigDecimal.fromString("0")
+    const decimals = fetchTokenDecimals(token)
+    if (decimals === null) {
+      log.debug('[SWAP] Failed to get decimals for token: {}', [token.toHexString()])
+      tokensDeAmount.push(BigDecimal.fromString("0"))
+      continue
+    }
+    const tokenDecimal = exponentToBigDecimal(decimals)
+    deAmount = amount.div(tokenDecimal)
+    tokensDeAmount.push(deAmount) 
+  }
+
+  // get total tokens price in USD with sum of tokens
+  let totalPriceUSD = BigDecimal.fromString("0")
+  for (let i = 0; i < tokenAddresses.length; i++) {
+    let token = tokenAddresses[i]
+    let deAmount = tokensDeAmount[i]
+    let tokenPriceETH = getTokenPriceETH(Address.fromBytes(token))
+    if (tokenPriceETH === null) {
+      log.debug('[SWAP] User {} in challenge {} Failed to get price ETH for token: {}', 
+        [event.params.user.toHexString(), event.params.challengeId.toString(), token.toHexString()])
+      continue
+    }
+    const amountETH = deAmount.times(tokenPriceETH)
+    const amountUSD = amountETH.times(ethPriceInUSD)
+    totalPriceUSD = totalPriceUSD.plus(amountUSD)
+  }
+  investor.tokens = tokenAddresses
+  investor.tokensAmount = tokensDeAmount
+  investor.currentUSD = totalPriceUSD
+  investor.profitUSD = investor.currentUSD.minus(investor.seedMoneyUSD)
+  investor.profitRatio = investor.profitUSD.div(investor.seedMoneyUSD)
+  investor.save()
+
+  investorSnapshot(event.params.challengeId, event.params.user, event)
 }
 
 export function handleRegister(event: RegisterEvent): void {

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { BigInt, BigDecimal, Address } from '@graphprotocol/graph-ts'
 
 // //mainnet
