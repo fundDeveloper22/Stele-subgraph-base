@@ -1,4 +1,4 @@
- type Stele @entity(immutable: false) {
+type Stele @entity(immutable: false) {
   id: Bytes!
   owner: Bytes! # address
   usdToken: Bytes! # address
