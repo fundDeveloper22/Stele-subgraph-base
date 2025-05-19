@@ -18,12 +18,36 @@ type Challenge @entity(immutable: false) {
   startTime: BigInt!
   endTime: BigInt!
   investorCounter: BigInt!
-  seedMoney : BigInt!
+  seedMoney: BigInt!
   entryFee: BigInt!
   rewardAmountUSD: BigInt!
   isActive: Boolean!
   topUsers: [Bytes!]!
   score: [BigInt!]!
+}
+
+type ActiveChallenges @entity(immutable: true) {
+  id: ID!
+  one_week_startTime: BigInt!
+  one_week_investorCounter: BigInt!
+  one_week_rewardAmountUSD: BigInt!
+  one_week_isCompleted: Boolean!
+  one_month_startTime: BigInt!
+  one_month_investorCounter: BigInt!
+  one_month_rewardAmountUSD: BigInt!
+  one_month_isCompleted: Boolean!
+  three_month_startTime: BigInt!
+  three_month_investorCounter: BigInt!
+  three_month_rewardAmountUSD: BigInt!
+  three_month_isCompleted: Boolean!
+  six_month_startTime: BigInt!
+  six_month_investorCounter: BigInt!
+  six_month_rewardAmountUSD: BigInt!
+  six_month_isCompleted: Boolean!
+  one_year_startTime: BigInt!
+  one_year_investorCounter: BigInt!
+  one_year_rewardAmountUSD: BigInt!
+  one_year_isCompleted: Boolean!
 }
 
 type Investor @entity(immutable: false) {
