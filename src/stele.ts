@@ -55,7 +55,6 @@ function fetchTokenSymbol(tokenAddress: Bytes): string {
 
 export function handleSteleCreated(event: SteleCreatedEvent): void {
   let stele = new Stele(Bytes.fromHexString(STELE_ADDRESS))
-
   stele.owner = event.params.owner
   stele.usdToken = event.params.usdToken
   stele.rewardRatio = event.params.rewardRatio
@@ -65,10 +64,30 @@ export function handleSteleCreated(event: SteleCreatedEvent): void {
   stele.challengeCounter= BigInt.fromI32(0)
   stele.investorCounter = BigInt.fromI32(0)
   stele.totalRewardUSD = BigDecimal.fromString("0")
-
   stele.save()
 
-  let activeChallenges = new ActiveChallenges(STELE_ADDRESS)
+  let activeChallenges = new ActiveChallenges(Bytes.fromHexString(STELE_ADDRESS))
+  activeChallenges.id = Bytes.fromHexString(STELE_ADDRESS)
+  activeChallenges.one_week_startTime = BigInt.fromI32(0)
+  activeChallenges.one_week_investorCounter = BigInt.fromI32(0)
+  activeChallenges.one_week_rewardAmountUSD = BigInt.fromI32(0)
+  activeChallenges.one_week_isCompleted = false
+  activeChallenges.one_month_startTime = BigInt.fromI32(0)
+  activeChallenges.one_month_investorCounter = BigInt.fromI32(0)
+  activeChallenges.one_month_rewardAmountUSD = BigInt.fromI32(0)
+  activeChallenges.one_month_isCompleted = false
+  activeChallenges.three_month_startTime = BigInt.fromI32(0)
+  activeChallenges.three_month_investorCounter = BigInt.fromI32(0)
+  activeChallenges.three_month_rewardAmountUSD = BigInt.fromI32(0)
+  activeChallenges.three_month_isCompleted = false
+  activeChallenges.six_month_startTime = BigInt.fromI32(0)
+  activeChallenges.six_month_investorCounter = BigInt.fromI32(0)
+  activeChallenges.six_month_rewardAmountUSD = BigInt.fromI32(0)
+  activeChallenges.six_month_isCompleted = false
+  activeChallenges.one_year_startTime = BigInt.fromI32(0)
+  activeChallenges.one_year_investorCounter = BigInt.fromI32(0)
+  activeChallenges.one_year_rewardAmountUSD = BigInt.fromI32(0)
+  activeChallenges.one_year_isCompleted = false
   activeChallenges.save()
 }
 
@@ -171,6 +190,7 @@ export function handleCreate(event: CreateEvent): void {
   if (steleSnapshot === null) {
     steleSnapshot = new SteleSnapshot(dayID.toString())
   }
+  steleSnapshot.date = dayID
   steleSnapshot.rewardRatio = stele.rewardRatio
   steleSnapshot.seedMoney = stele.seedMoney
   steleSnapshot.entryFee = stele.entryFee
@@ -210,7 +230,7 @@ export function handleCreate(event: CreateEvent): void {
   challengeSnapshot.score = []
   challengeSnapshot.save()
 
-  let activeChallenges = ActiveChallenges.load(STELE_ADDRESS)
+  let activeChallenges = ActiveChallenges.load(Bytes.fromHexString(STELE_ADDRESS))
   if (activeChallenges == null) {
     log.debug('[CREATE] ActiveChallenges not found, ChallengeId : {}', [event.params.challengeId.toString()])
     return
@@ -221,26 +241,31 @@ export function handleCreate(event: CreateEvent): void {
       activeChallenges.one_week_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_week_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.one_week_isCompleted = false
+      break;
     case ChallengeType.OneMonth:
       activeChallenges.one_month_startTime = event.block.timestamp
       activeChallenges.one_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.one_month_isCompleted = false
+      break;
     case ChallengeType.ThreeMonths:
       activeChallenges.three_month_startTime = event.block.timestamp
       activeChallenges.three_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.three_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.three_month_isCompleted = false
+      break;
     case ChallengeType.SixMonths:
       activeChallenges.six_month_startTime = event.block.timestamp
       activeChallenges.six_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.six_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.six_month_isCompleted = false
+      break;
     case ChallengeType.OneYear:
       activeChallenges.one_year_startTime = event.block.timestamp
       activeChallenges.one_year_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_year_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.one_year_isCompleted = false
+      break;
     default:
       break;
   }
@@ -306,7 +331,7 @@ export function handleJoin(event: JoinEvent): void {
 
   investorSnapshot(event.params.challengeId, event.params.user, event)
 
-  let activeChallenges = ActiveChallenges.load(STELE_ADDRESS)
+  let activeChallenges = ActiveChallenges.load(Bytes.fromHexString(STELE_ADDRESS))
   if (activeChallenges == null) {
     log.debug('[JOIN] ActiveChallenges not found, ChallengeId : {}', [event.params.challengeId.toString()])
     return
@@ -314,19 +339,24 @@ export function handleJoin(event: JoinEvent): void {
   switch (challenge.challengeType) {
     case ChallengeType.OneWeek:
       activeChallenges.one_week_investorCounter = activeChallenges.one_week_investorCounter.plus(BigInt.fromI32(1))
-      activeChallenges.one_week_rewardAmountUSD = activeChallenges.one_week_rewardAmountUSD.plus(challenge.entryFee)    
+      activeChallenges.one_week_rewardAmountUSD = activeChallenges.one_week_rewardAmountUSD.plus(challenge.entryFee)
+      break;
     case ChallengeType.OneMonth:
       activeChallenges.one_month_investorCounter = activeChallenges.one_month_investorCounter.plus(BigInt.fromI32(1))
-      activeChallenges.one_month_rewardAmountUSD = activeChallenges.one_month_rewardAmountUSD.plus(challenge.entryFee)    
+      activeChallenges.one_month_rewardAmountUSD = activeChallenges.one_month_rewardAmountUSD.plus(challenge.entryFee)
+      break;
     case ChallengeType.ThreeMonths:
       activeChallenges.three_month_investorCounter = activeChallenges.three_month_investorCounter.plus(BigInt.fromI32(1))
-      activeChallenges.three_month_rewardAmountUSD = activeChallenges.three_month_rewardAmountUSD.plus(challenge.entryFee)    
+      activeChallenges.three_month_rewardAmountUSD = activeChallenges.three_month_rewardAmountUSD.plus(challenge.entryFee)
+      break;
     case ChallengeType.SixMonths:
       activeChallenges.six_month_investorCounter = activeChallenges.six_month_investorCounter.plus(BigInt.fromI32(1))
-      activeChallenges.six_month_rewardAmountUSD = activeChallenges.six_month_rewardAmountUSD.plus(challenge.entryFee)    
+      activeChallenges.six_month_rewardAmountUSD = activeChallenges.six_month_rewardAmountUSD.plus(challenge.entryFee)
+      break;
     case ChallengeType.OneYear:
       activeChallenges.one_year_investorCounter = activeChallenges.one_year_investorCounter.plus(BigInt.fromI32(1))
-      activeChallenges.one_year_rewardAmountUSD = activeChallenges.one_year_rewardAmountUSD.plus(challenge.entryFee)    
+      activeChallenges.one_year_rewardAmountUSD = activeChallenges.one_year_rewardAmountUSD.plus(challenge.entryFee)
+      break;
     default:
       break;
   }  
@@ -425,7 +455,7 @@ export function handleReward(event: RewardEvent): void {
   reward.transactionHash = event.transaction.hash
   reward.save()
 
-  let activeChallenges = ActiveChallenges.load(STELE_ADDRESS)
+  let activeChallenges = ActiveChallenges.load(Bytes.fromHexString(STELE_ADDRESS))
   if (activeChallenges == null) {
     log.debug('[REWARD] ActiveChallenges not found, ChallengeId : {}', [event.params.challengeId.toString()])
     return
@@ -438,14 +468,19 @@ export function handleReward(event: RewardEvent): void {
   switch (challenge.challengeType) {
     case ChallengeType.OneWeek:
       activeChallenges.one_week_isCompleted = true
+      break;
     case ChallengeType.OneMonth:
       activeChallenges.one_month_isCompleted = true
+      break;
     case ChallengeType.ThreeMonths:
       activeChallenges.three_month_isCompleted = true
+      break;
     case ChallengeType.SixMonths:
       activeChallenges.six_month_isCompleted = true
+      break;
     case ChallengeType.OneYear:
       activeChallenges.one_year_isCompleted = true
+      break;
     default:
       break;
   }

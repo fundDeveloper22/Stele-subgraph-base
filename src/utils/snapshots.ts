@@ -21,6 +21,7 @@ export function steleSnapshot(event: ethereum.Event): void {
   if (steleSnapshot === null) {
     steleSnapshot = new SteleSnapshot(dayID.toString())
   }
+  steleSnapshot.date = dayID
   steleSnapshot.rewardRatio = stele.rewardRatio
   steleSnapshot.seedMoney = stele.seedMoney
   steleSnapshot.entryFee = stele.entryFee

@@ -26,8 +26,8 @@ type Challenge @entity(immutable: false) {
   score: [BigInt!]!
 }
 
-type ActiveChallenges @entity(immutable: true) {
-  id: ID!
+type ActiveChallenges @entity(immutable: false) {
+  id: Bytes!
   one_week_startTime: BigInt!
   one_week_investorCounter: BigInt!
   one_week_rewardAmountUSD: BigInt!
