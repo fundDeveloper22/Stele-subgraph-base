@@ -34,6 +34,7 @@ import { ERC20 } from "../generated/Stele/ERC20"
 import { steleSnapshot, challengeSnapshot, investorSnapshot } from "./utils/snapshots"
 import { getEthPriceInUSD, getTokenPriceETH } from "./utils/pricing"
 import { exponentToBigDecimal } from "./utils/index"
+import { getInvestorID } from "./utils/investor"
 
 function fetchTokenDecimals(tokenAddress: Bytes): BigInt | null {
   let contract = ERC20.bind(Address.fromBytes(tokenAddress))
@@ -68,26 +69,31 @@ export function handleSteleCreated(event: SteleCreatedEvent): void {
 
   let activeChallenges = new ActiveChallenges(Bytes.fromHexString(STELE_ADDRESS))
   activeChallenges.id = Bytes.fromHexString(STELE_ADDRESS)
+  activeChallenges.one_week_id = "0"
   activeChallenges.one_week_startTime = BigInt.fromI32(0)
   activeChallenges.one_week_investorCounter = BigInt.fromI32(0)
   activeChallenges.one_week_rewardAmountUSD = BigInt.fromI32(0)
-  activeChallenges.one_week_isCompleted = false
+  activeChallenges.one_week_isCompleted = true
+  activeChallenges.one_month_id = "0"
   activeChallenges.one_month_startTime = BigInt.fromI32(0)
   activeChallenges.one_month_investorCounter = BigInt.fromI32(0)
   activeChallenges.one_month_rewardAmountUSD = BigInt.fromI32(0)
-  activeChallenges.one_month_isCompleted = false
+  activeChallenges.one_month_isCompleted = true
+  activeChallenges.three_month_id = "0"
   activeChallenges.three_month_startTime = BigInt.fromI32(0)
   activeChallenges.three_month_investorCounter = BigInt.fromI32(0)
   activeChallenges.three_month_rewardAmountUSD = BigInt.fromI32(0)
-  activeChallenges.three_month_isCompleted = false
+  activeChallenges.three_month_isCompleted = true
+  activeChallenges.six_month_id = "0"
   activeChallenges.six_month_startTime = BigInt.fromI32(0)
   activeChallenges.six_month_investorCounter = BigInt.fromI32(0)
   activeChallenges.six_month_rewardAmountUSD = BigInt.fromI32(0)
-  activeChallenges.six_month_isCompleted = false
+  activeChallenges.six_month_isCompleted = true
+  activeChallenges.one_year_id = "0"
   activeChallenges.one_year_startTime = BigInt.fromI32(0)
   activeChallenges.one_year_investorCounter = BigInt.fromI32(0)
   activeChallenges.one_year_rewardAmountUSD = BigInt.fromI32(0)
-  activeChallenges.one_year_isCompleted = false
+  activeChallenges.one_year_isCompleted = true
   activeChallenges.save()
 }
 
@@ -237,30 +243,35 @@ export function handleCreate(event: CreateEvent): void {
   }
   switch (challenge.challengeType) {
     case ChallengeType.OneWeek:
+      activeChallenges.one_week_id = event.params.challengeId.toString()
       activeChallenges.one_week_startTime = event.block.timestamp
       activeChallenges.one_week_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_week_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.one_week_isCompleted = false
       break;
     case ChallengeType.OneMonth:
+      activeChallenges.one_month_id = event.params.challengeId.toString()
       activeChallenges.one_month_startTime = event.block.timestamp
       activeChallenges.one_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.one_month_isCompleted = false
       break;
     case ChallengeType.ThreeMonths:
+      activeChallenges.three_month_id = event.params.challengeId.toString()
       activeChallenges.three_month_startTime = event.block.timestamp
       activeChallenges.three_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.three_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.three_month_isCompleted = false
       break;
     case ChallengeType.SixMonths:
+      activeChallenges.six_month_id = event.params.challengeId.toString()
       activeChallenges.six_month_startTime = event.block.timestamp
       activeChallenges.six_month_investorCounter = BigInt.fromI32(0)
       activeChallenges.six_month_rewardAmountUSD = BigInt.fromI32(0)
       activeChallenges.six_month_isCompleted = false
       break;
     case ChallengeType.OneYear:
+      activeChallenges.one_year_id = event.params.challengeId.toString()
       activeChallenges.one_year_startTime = event.block.timestamp
       activeChallenges.one_year_investorCounter = BigInt.fromI32(0)
       activeChallenges.one_year_rewardAmountUSD = BigInt.fromI32(0)
@@ -303,9 +314,7 @@ export function handleJoin(event: JoinEvent): void {
   challengeSnapshot(event.params.challengeId.toString(), event)
 
   // Create new Investor and InvestorSnapshot
-  let investor = new Investor(
-    event.params.challengeId.toString() + "-" + event.params.user.toHexString()
-  )
+  let investor = new Investor(getInvestorID(event.params.challengeId, event.params.user))
   investor.challengeId = event.params.challengeId.toString()
   investor.createdAtTimestamp = event.block.timestamp
   investor.updatedAtTimestamp = event.block.timestamp
