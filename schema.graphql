@@ -140,6 +140,17 @@ type Reward @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type Ranking @entity(immutable: false) {
+  # format: <challenge id>
+  id: ID!
+  challengeId: String!
+  topUsers: [Bytes!]! # address[10]
+  scores: [BigInt!]! # uint256[10]
+  updatedAtTimestamp: BigInt! # last update timestamp
+  updatedAtBlockNumber: BigInt! # last update block number
+  updatedAtTransactionHash: Bytes! # last update transaction hash
+}
+
 type SteleTokenBonus @entity(immutable: true) {
   id: Bytes!
   challengeId: BigInt! # uint256

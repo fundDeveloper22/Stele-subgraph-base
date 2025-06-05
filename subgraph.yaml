@@ -8,9 +8,9 @@ dataSources:
     name: Stele
     network: base
     source:
-      address: "0x30116F4a15146534a90B56c3Fbe26155ABEec1b5"
+      address: "0x2D14C45D63901b9e8a3ee6709bC6f44a2882CB35"
       abi: Stele
-      startBlock: 31120758
+      startBlock: 31168403
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

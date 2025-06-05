@@ -28,7 +28,8 @@ import {
   ChallengeSnapshot,
   Investor,
   ActiveChallenges,
-  SteleTokenBonus
+  SteleTokenBonus,
+  Ranking
 } from "../generated/schema"
 import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts"
 import { ChallengeType, getDuration, STELE_ADDRESS } from "./utils/constants"
@@ -538,6 +539,43 @@ export function handleRegister(event: RegisterEvent): void {
   register.blockTimestamp = event.block.timestamp
   register.transactionHash = event.transaction.hash
   register.save()
+
+  // Update ranking by calling getRanking from Stele contract
+  let steleContract = SteleContract.bind(Address.fromBytes(Address.fromHexString(STELE_ADDRESS)))
+  let rankingResult = steleContract.try_getRanking(event.params.challengeId)
+  
+  if (!rankingResult.reverted) {
+    let ranking = Ranking.load(event.params.challengeId.toString())
+    if (ranking == null) {
+      ranking = new Ranking(event.params.challengeId.toString())
+      ranking.challengeId = event.params.challengeId.toString()
+    }
+    
+    // Convert addresses and scores to Bytes[] and BigInt[]
+    let topUsers: Bytes[] = []
+    let scores: BigInt[] = []
+    
+    for (let i = 0; i < rankingResult.value.value0.length; i++) {
+      topUsers.push(Bytes.fromHexString(rankingResult.value.value0[i].toHexString()))
+      scores.push(rankingResult.value.value1[i])
+    }
+    
+    ranking.topUsers = topUsers
+    ranking.scores = scores
+    ranking.updatedAtTimestamp = event.block.timestamp
+    ranking.updatedAtBlockNumber = event.block.number
+    ranking.updatedAtTransactionHash = event.transaction.hash
+    ranking.save()
+    
+    log.info('[REGISTER] Updated ranking for challenge {} with {} users', [
+      event.params.challengeId.toString(),
+      topUsers.length.toString()
+    ])
+  } else {
+    log.warning('[REGISTER] Failed to get ranking for challenge {}', [
+      event.params.challengeId.toString()
+    ])
+  }
 }
 
 export function handleReward(event: RewardEvent): void {
