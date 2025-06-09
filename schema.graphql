@@ -1,0 +1,134 @@
+type AddToken @entity(immutable: true) {
+  id: Bytes!
+  tokenAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Create @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  challengeType: Int! # uint8
+  seedMoney: BigInt! # uint256
+  entryFee: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EntryFee @entity(immutable: true) {
+  id: Bytes!
+  newEntryFee: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Join @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  seedMoney: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MaxAssets @entity(immutable: true) {
+  id: Bytes!
+  newMaxAssets: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Register @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  performance: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RemoveToken @entity(immutable: true) {
+  id: Bytes!
+  tokenAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Reward @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  rewardAmount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RewardRatio @entity(immutable: true) {
+  id: Bytes!
+  newRewardRatio: [BigInt!]! # uint256[5]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeedMoney @entity(immutable: true) {
+  id: Bytes!
+  newSeedMoney: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SteleCreated @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  usdToken: Bytes! # address
+  maxAssets: Int! # uint8
+  seedMoney: BigInt! # uint256
+  entryFee: BigInt! # uint256
+  rewardRatio: [BigInt!]! # uint256[5]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SteleTokenBonus @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  action: String! # string
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  fromAsset: Bytes! # address
+  toAsset: Bytes! # address
+  fromAmount: BigInt! # uint256
+  toAmount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
