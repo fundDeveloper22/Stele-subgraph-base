@@ -29,7 +29,8 @@ import {
   Investor,
   ActiveChallenges,
   SteleTokenBonus,
-  Ranking
+  Ranking,
+  TotalRanking
 } from "../generated/schema"
 import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts"
 import { ChallengeType, getDuration, STELE_ADDRESS } from "./utils/constants"
@@ -706,6 +707,21 @@ export function handleRegister(event: RegisterEvent): void {
     ranking.updatedAtBlockNumber = event.block.number
     ranking.updatedAtTransactionHash = event.transaction.hash
     ranking.save()
+
+    let totalRanking = TotalRanking.load(getInvestorID(event.params.challengeId, event.params.user))
+    if (totalRanking == null) {
+      totalRanking = new TotalRanking(getInvestorID(event.params.challengeId, event.params.user))
+    }
+    totalRanking.challengeId = event.params.challengeId.toString()
+    totalRanking.seedMoney = challenge.seedMoney
+    totalRanking.user = event.params.user
+    let formattedScore = BigDecimal.fromString(event.params.performance.toString()).div(decimalDivisor)
+    totalRanking.score = formattedScore
+    let profitDecimal = formattedScore.minus(seedMoneyFormatted)
+    let profitRatio = profitDecimal.div(seedMoneyFormatted).times(BigDecimal.fromString("100")).truncate(4)
+    totalRanking.profitRatio = profitRatio
+    totalRanking.updatedAtTimestamp = event.block.timestamp
+    totalRanking.save()
     
     log.info('[REGISTER] Updated ranking for challenge {} with {} users', [
       event.params.challengeId.toString(),

@@ -153,6 +153,17 @@ type Ranking @entity(immutable: false) {
   updatedAtTransactionHash: Bytes! # last update transaction hash
 }
 
+type TotalRanking @entity(immutable: false) {
+  # format: <challenge id>-<investor address>
+  id: ID!
+  challengeId: String!
+  seedMoney: BigInt!
+  user: Bytes! # address
+  score: BigDecimal! # formatted uint256 (divided by token decimals)
+  profitRatio: BigDecimal!
+  updatedAtTimestamp: BigInt! # update timestamp
+}
+
 type SteleTokenBonus @entity(immutable: true) {
   id: Bytes!
   challengeId: BigInt! # uint256
