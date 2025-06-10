@@ -1,25 +1,95 @@
-type AddToken @entity(immutable: true) {
+type Stele @entity(immutable: false) {
   id: Bytes!
-  tokenAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  owner: Bytes! # address
+  usdToken: Bytes! # address
+  rewardRatio: [BigInt!]! # uint256[5]
+  seedMoney: BigInt! # uint256
+  entryFee: BigInt! # uint256
+  maxAssets: Int! # uint8
+  challengeCounter: BigInt! # uint256
+  investorCounter: BigInt! # uint256
+  totalRewardUSD: BigDecimal! # uint256
+}
+
+type Challenge @entity(immutable: false) {
+  id: ID!
+  challengeId: String!
+  challengeType: Int!
+  startTime: BigInt!
+  endTime: BigInt!
+  investorCounter: BigInt!
+  seedMoney: BigInt!
+  entryFee: BigInt!
+  rewardAmountUSD: BigInt!
+  isActive: Boolean!
+  topUsers: [Bytes!]!
+  score: [BigInt!]!
+}
+
+type ActiveChallenges @entity(immutable: false) {
+  id: Bytes!
+  one_week_id: String!
+  one_week_startTime: BigInt!
+  one_week_endTime: BigInt!
+  one_week_investorCounter: BigInt!
+  one_week_rewardAmountUSD: BigInt!
+  one_week_isCompleted: Boolean!
+  one_month_id: String!
+  one_month_startTime: BigInt!
+  one_month_endTime: BigInt!
+  one_month_investorCounter: BigInt!
+  one_month_rewardAmountUSD: BigInt!
+  one_month_isCompleted: Boolean!
+  three_month_id: String!
+  three_month_startTime: BigInt!
+  three_month_endTime: BigInt!
+  three_month_investorCounter: BigInt!
+  three_month_rewardAmountUSD: BigInt!
+  three_month_isCompleted: Boolean!
+  six_month_id: String!
+  six_month_startTime: BigInt!
+  six_month_endTime: BigInt!
+  six_month_investorCounter: BigInt!
+  six_month_rewardAmountUSD: BigInt!
+  six_month_isCompleted: Boolean!
+  one_year_id: String!
+  one_year_startTime: BigInt!
+  one_year_endTime: BigInt!
+  one_year_investorCounter: BigInt!
+  one_year_rewardAmountUSD: BigInt!
+  one_year_isCompleted: Boolean!
+}
+
+type Investor @entity(immutable: false) {
+  # format: <challenge id>-<investor address>
+  id: ID!
+  challengeId: String!
+  createdAtTimestamp: BigInt!
+  updatedAtTimestamp: BigInt!
+  investor: Bytes!
+  seedMoneyUSD: BigDecimal!
+  currentUSD: BigDecimal!
+  tokens: [Bytes!]!
+  tokensAmount: [BigDecimal!]!
+  tokensDecimals: [BigInt!]!
+  tokensSymbols: [String!]!
+  profitUSD: BigDecimal!
+  profitRatio: BigDecimal!
+}
+
+type InvestableToken @entity(immutable: false) {
+  id: Bytes!
+  tokenAddress: Bytes!
+  decimals: BigInt!
+  symbol: String!
+  isInvestable: Boolean!
+  updatedTimestamp: BigInt!
 }
 
 type Create @entity(immutable: true) {
   id: Bytes!
   challengeId: BigInt! # uint256
   challengeType: Int! # uint8
-  seedMoney: BigInt! # uint256
-  entryFee: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type EntryFee @entity(immutable: true) {
-  id: Bytes!
-  newEntryFee: BigInt! # uint256
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -35,18 +105,16 @@ type Join @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type MaxAssets @entity(immutable: true) {
+type Swap @entity(immutable: true) {
   id: Bytes!
-  newMaxAssets: Int! # uint8
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
+  challengeId: BigInt! # uint256
+  user: Bytes! # address
+  fromAsset: Bytes! # address
+  toAsset: Bytes! # address
+  fromAmount: BigDecimal! # formatted amount (not raw)
+  fromPriceUSD: BigDecimal! # uint256
+  toPriceUSD: BigDecimal! # uint256
+  toAmount: BigDecimal! # formatted amount (not raw)
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -62,14 +130,6 @@ type Register @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type RemoveToken @entity(immutable: true) {
-  id: Bytes!
-  tokenAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
 type Reward @entity(immutable: true) {
   id: Bytes!
   challengeId: BigInt! # uint256
@@ -80,33 +140,17 @@ type Reward @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type RewardRatio @entity(immutable: true) {
-  id: Bytes!
-  newRewardRatio: [BigInt!]! # uint256[5]
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type SeedMoney @entity(immutable: true) {
-  id: Bytes!
-  newSeedMoney: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type SteleCreated @entity(immutable: true) {
-  id: Bytes!
-  owner: Bytes! # address
-  usdToken: Bytes! # address
-  maxAssets: Int! # uint8
-  seedMoney: BigInt! # uint256
-  entryFee: BigInt! # uint256
-  rewardRatio: [BigInt!]! # uint256[5]
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type Ranking @entity(immutable: false) {
+  # format: <challenge id>
+  id: ID!
+  challengeId: String!
+  seedMoney: BigInt!
+  topUsers: [Bytes!]! # address[10]
+  scores: [BigInt!]! # uint256[10]
+  profitRatios: [BigDecimal!]!
+  updatedAtTimestamp: BigInt! # last update timestamp
+  updatedAtBlockNumber: BigInt! # last update block number
+  updatedAtTransactionHash: Bytes! # last update transaction hash
 }
 
 type SteleTokenBonus @entity(immutable: true) {
@@ -120,33 +164,45 @@ type SteleTokenBonus @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type Swap @entity(immutable: true) {
-  id: Bytes!
-  challengeId: BigInt! # uint256
-  user: Bytes! # address
-  fromAsset: Bytes! # address
-  toAsset: Bytes! # address
-  fromAmount: BigInt! # uint256
-  toAmount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-type EIP712DomainChanged @entity(immutable: true) {
-  id: Bytes!
-
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type SteleSnapshot @entity(immutable: false) {
+  id: ID!
+  date: Int!
+  rewardRatio: [BigInt!]!
+  seedMoney: BigInt!
+  entryFee: BigInt!
+  maxAssets: Int!
+  owner: Bytes!
+  challengeCounter: BigInt!
+  investorCounter: BigInt!
+  totalRewardUSD: BigDecimal!
 }
 
-type ProposalCanceled @entity(immutable: true) {
-  id: Bytes!
-  proposalId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+type ChallengeSnapshot @entity(immutable: false) {
+  id: ID!
+  challengeId: String!
+  timestamp: BigInt!
+  investorCount: BigInt!
+  rewardAmountUSD: BigInt!
+  topUsers: [Bytes!]!
+  score: [BigInt!]!
 }
+
+type InvestorSnapshot @entity(immutable: false) {
+  # format: <challenge id>-<investor address>
+  id: ID!
+  challengeId: String!
+  timestamp: BigInt!
+  investor: Bytes!
+  seedMoneyUSD: BigDecimal!
+  currentUSD: BigDecimal!
+  tokens: [Bytes!]!
+  tokensAmount: [BigDecimal!]!
+  tokensDecimals: [BigInt!]!
+  tokensSymbols: [String!]!
+  profitRatio: BigDecimal!
+}
+
+# Governance Entities
 
 type ProposalCreated @entity(immutable: true) {
   id: Bytes!
@@ -164,6 +220,14 @@ type ProposalCreated @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type ProposalCanceled @entity(immutable: true) {
+  id: Bytes!
+  proposalId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type ProposalExecuted @entity(immutable: true) {
   id: Bytes!
   proposalId: BigInt! # uint256
@@ -176,33 +240,6 @@ type ProposalQueued @entity(immutable: true) {
   id: Bytes!
   proposalId: BigInt! # uint256
   eta: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type ProposalThresholdSet @entity(immutable: true) {
-  id: Bytes!
-  oldProposalThreshold: BigInt! # uint256
-  newProposalThreshold: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type QuorumNumeratorUpdated @entity(immutable: true) {
-  id: Bytes!
-  oldQuorumNumerator: BigInt! # uint256
-  newQuorumNumerator: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TimelockChange @entity(immutable: true) {
-  id: Bytes!
-  oldTimelock: Bytes! # address
-  newTimelock: Bytes! # address
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -233,6 +270,24 @@ type VoteCastWithParams @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type ProposalThresholdSet @entity(immutable: true) {
+  id: Bytes!
+  oldProposalThreshold: BigInt! # uint256
+  newProposalThreshold: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QuorumNumeratorUpdated @entity(immutable: true) {
+  id: Bytes!
+  oldQuorumNumerator: BigInt! # uint256
+  newQuorumNumerator: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type VotingDelaySet @entity(immutable: true) {
   id: Bytes!
   oldVotingDelay: BigInt! # uint256
@@ -249,4 +304,123 @@ type VotingPeriodSet @entity(immutable: true) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+}
+
+type TimelockChange @entity(immutable: true) {
+  id: Bytes!
+  oldTimelock: Bytes! # address
+  newTimelock: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Proposal Vote Results Aggregation
+type ProposalVoteResult @entity(immutable: false) {
+  id: ID! # proposalId
+  proposalId: BigInt! # uint256
+  forVotes: BigInt! # total votes for
+  againstVotes: BigInt! # total votes against
+  abstainVotes: BigInt! # total abstain votes
+  totalVotes: BigInt! # total votes cast
+  forPercentage: BigDecimal! # percentage for (0-100)
+  againstPercentage: BigDecimal! # percentage against (0-100)
+  abstainPercentage: BigDecimal! # percentage abstain (0-100)
+  voterCount: BigInt! # number of unique voters
+  lastUpdatedBlock: BigInt! # last block when updated
+  lastUpdatedTimestamp: BigInt! # last timestamp when updated
+  isFinalized: Boolean! # whether voting period has ended
+}
+
+enum ProposalStatus {
+  PENDING         # Created but voting hasn't started
+  ACTIVE          # Voting is currently active
+  QUEUED          # Proposal is queued for execution (timelock period)
+  EXECUTED        # Proposal has been executed
+  CANCELED        # Proposal has been canceled
+}
+
+# Comprehensive Proposal State Tracking
+type Proposal @entity(immutable: false) {
+  id: ID! # proposalId
+  proposalId: BigInt! # uint256
+  proposer: Bytes! # address
+  targets: [Bytes!]! # address[]
+  values: [BigInt!]! # uint256[]
+  signatures: [String!]! # string[]
+  calldatas: [Bytes!]! # bytes[]
+  voteStart: BigInt! # uint256
+  voteEnd: BigInt! # uint256
+  description: String! # string
+  
+  # Status tracking
+  status: ProposalStatus! # current status
+  createdAt: BigInt! # creation timestamp
+  queuedAt: BigInt # queued timestamp (null if not queued)
+  executedAt: BigInt # executed timestamp (null if not executed)
+  canceledAt: BigInt # canceled timestamp (null if not canceled)
+  eta: BigInt # execution eta (null if not queued)
+  
+  # Vote aggregation (linked to ProposalVoteResult)
+  voteResult: ProposalVoteResult
+  
+  # Block info
+  createdAtBlock: BigInt!
+  lastUpdatedBlock: BigInt!
+}
+
+# Individual Vote Record with aggregation helper
+type Vote @entity(immutable: true) {
+  id: ID! # proposalId-voter
+  proposalId: BigInt! # uint256
+  voter: Bytes! # address
+  support: Int! # uint8 (0=against, 1=for, 2=abstain)
+  weight: BigInt! # uint256
+  reason: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Pricing Cache Entities
+type Bundle @entity(immutable: false) {
+  # Global state for ETH price - ID is always "1"
+  id: ID!
+  ethPriceUSD: BigDecimal!
+  lastUpdateBlock: BigInt!
+  lastUpdateTimestamp: BigInt!
+}
+
+type PriceCache @entity(immutable: false) {
+  # Token price cache - ID format: "token-blockNumber"
+  id: ID!
+  tokenAddress: Bytes!
+  priceETH: BigDecimal!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type TokenCache @entity(immutable: false) {
+  # Token info cache - ID is token address
+  id: Bytes!
+  tokenAddress: Bytes!
+  decimals: BigInt!
+  symbol: String!
+  updatedTimestamp: BigInt!
+}
+
+type PoolInfo @entity(immutable: false) {
+  # Pool info cache - ID format: "tokenA-tokenB-fee"
+  # tokenA < tokenB (sorted order)
+  id: ID!
+  tokenA: Bytes!  # Lower address token
+  tokenB: Bytes!  # Higher address token
+  fee: Int!       # Fee tier (500, 3000, 10000)
+  poolAddress: Bytes!  # Actual pool address
+  token0: Bytes!  # token0 from pool
+  token1: Bytes!  # token1 from pool
+  liquidity: BigInt!   # Current liquidity (cached for 6 hours)
+  liquidityUpdatedTimestamp: BigInt!  # Last liquidity update timestamp
+  sqrtPriceX96: BigInt!  # Current price sqrt (cached for 15 minutes)
+  slot0UpdatedTimestamp: BigInt!  # Last slot0 update timestamp
 }
