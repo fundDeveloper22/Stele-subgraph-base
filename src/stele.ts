@@ -627,9 +627,24 @@ export function handleRegister(event: RegisterEvent): void {
       ranking.challengeId = event.params.challengeId.toString()
     }
     
-    // Convert addresses and scores to Bytes[] and BigInt[]
+    // Get USD token decimals for formatting scores
+    let steleEntity = Stele.load(Bytes.fromI32(0))
+    if (steleEntity == null) {
+      log.debug('[REGISTER] Stele entity not found, ChallengeId : {}', [event.params.challengeId.toString()])
+      return
+    }
+    
+    let usdTokenDecimals = fetchTokenDecimals(steleEntity.usdToken, event.block.timestamp)
+    if (usdTokenDecimals === null) {
+      log.error('[REGISTER] Failed to get USD token decimals, ChallengeId : {}', [event.params.challengeId.toString()])
+      return
+    }
+    
+    let decimalDivisor = exponentToBigDecimal(usdTokenDecimals)
+    
+    // Convert addresses and scores to Bytes[] and BigDecimal[]
     let topUsers: Bytes[] = []
-    let scores: BigInt[] = []
+    let scores: BigDecimal[] = []
     
     // Debug: Log the raw values returned from getRanking
     log.info('[REGISTER DEBUG] getRanking returned {} users', [
@@ -639,13 +654,17 @@ export function handleRegister(event: RegisterEvent): void {
     for (let i = 0; i < rankingResult.value.value0.length; i++) {
       topUsers.push(Bytes.fromHexString(rankingResult.value.value0[i].toHexString()))
       
-      // Debug: Log individual score values
-      log.info('[REGISTER DEBUG] User {} score: {}', [
+      // Convert raw score to formatted value using USD token decimals
+      let formattedScore = BigDecimal.fromString(rankingResult.value.value1[i].toString()).div(decimalDivisor)
+      
+      // Debug: Log individual score values (raw vs formatted)
+      log.info('[REGISTER DEBUG] User {} - Raw score: {}, Formatted score: {}', [
         rankingResult.value.value0[i].toHexString(),
-        rankingResult.value.value1[i].toString()
+        rankingResult.value.value1[i].toString(),
+        formattedScore.toString()
       ])
       
-      scores.push(rankingResult.value.value1[i])
+      scores.push(formattedScore)
     }
 
     let challenge = Challenge.load(event.params.challengeId.toString())
@@ -653,43 +672,35 @@ export function handleRegister(event: RegisterEvent): void {
       log.debug('[REGISTER] Challenge not found, ChallengeId : {}', [event.params.challengeId.toString()])
       return
     }
+    
+    // challenge.seedMoney is already formatted (divided by decimals in handleCreate)
+    let seedMoneyFormatted = BigDecimal.fromString(challenge.seedMoney.toString())
+    
     ranking.seedMoney = challenge.seedMoney
     ranking.topUsers = topUsers
     ranking.scores = scores
     
-    // Get USD token decimals for formatting
-    let steleEntity = Stele.load(Bytes.fromI32(0))
-    if (steleEntity == null) {
-      log.debug('[REGISTER] Stele entity not found for profitRatios calculation, ChallengeId : {}', [event.params.challengeId.toString()])
-      ranking.profitRatios = []
-    } else {
-      let usdTokenDecimals = fetchTokenDecimals(steleEntity.usdToken, event.block.timestamp)
-      if (usdTokenDecimals !== null) {
-        let decimalDivisor = exponentToBigDecimal(usdTokenDecimals)
+    // Calculate profit ratios using formatted scores and seedMoney
+    let profitRatios: BigDecimal[] = []
+    for (let i = 0; i < scores.length; i++) {
+      if (!seedMoneyFormatted.equals(BigDecimal.fromString("0"))) {
+        // Calculate profit ratio: (formattedScore - seedMoneyFormatted) / seedMoneyFormatted * 100
+        let profitDecimal = scores[i].minus(seedMoneyFormatted)
+        let profitRatio = profitDecimal.div(seedMoneyFormatted).times(BigDecimal.fromString("100")).truncate(4)
+        profitRatios.push(profitRatio)
         
-        // Convert seedMoney to formatted value (e.g., 1000 -> 1000.000000)
-        let seedMoneyFormatted = BigDecimal.fromString(challenge.seedMoney.toString()).div(decimalDivisor)
-        
-        // Calculate profit ratios for all scores
-        let profitRatios: BigDecimal[] = []
-        for (let i = 0; i < scores.length; i++) {
-          if (!seedMoneyFormatted.equals(BigDecimal.fromString("0"))) {
-            // Convert score to formatted value
-            let scoreFormatted = BigDecimal.fromString(scores[i].toString()).div(decimalDivisor)
-            // Calculate profit ratio: (score - seedMoney) / seedMoney * 100
-            let profitDecimal = scoreFormatted.minus(seedMoneyFormatted)
-            let profitRatio = profitDecimal.div(seedMoneyFormatted).times(BigDecimal.fromString("100"))
-            profitRatios.push(profitRatio)
-          } else {
-            profitRatios.push(BigDecimal.fromString("0"))
-          }
-        }
-        ranking.profitRatios = profitRatios
+        // Debug: Log profit ratio calculation
+        log.info('[REGISTER DEBUG] User {} - Score: {}, SeedMoney: {}, ProfitRatio: {}%', [
+          topUsers[i].toHexString(),
+          scores[i].toString(),
+          seedMoneyFormatted.toString(),
+          profitRatio.toString()
+        ])
       } else {
-        log.error('[REGISTER] Failed to get USD token decimals for profitRatios calculation, ChallengeId : {}', [event.params.challengeId.toString()])
-        ranking.profitRatios = []
+        profitRatios.push(BigDecimal.fromString("0"))
       }
     }
+    ranking.profitRatios = profitRatios
     
     ranking.updatedAtTimestamp = event.block.timestamp
     ranking.updatedAtBlockNumber = event.block.number

@@ -146,7 +146,7 @@ type Ranking @entity(immutable: false) {
   challengeId: String!
   seedMoney: BigInt!
   topUsers: [Bytes!]! # address[10]
-  scores: [BigInt!]! # uint256[10]
+  scores: [BigDecimal!]! # formatted uint256[10] (divided by token decimals)
   profitRatios: [BigDecimal!]!
   updatedAtTimestamp: BigInt! # last update timestamp
   updatedAtBlockNumber: BigInt! # last update block number
