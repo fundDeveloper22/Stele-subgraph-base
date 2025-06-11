@@ -8,7 +8,6 @@ type Stele @entity(immutable: false) {
   maxAssets: Int! # uint8
   challengeCounter: BigInt! # uint256
   investorCounter: BigInt! # uint256
-  totalRewardUSD: BigDecimal! # uint256
 }
 
 type Challenge @entity(immutable: false) {
@@ -175,19 +174,6 @@ type SteleTokenBonus @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type SteleSnapshot @entity(immutable: false) {
-  id: ID!
-  date: Int!
-  rewardRatio: [BigInt!]!
-  seedMoney: BigInt!
-  entryFee: BigInt!
-  maxAssets: Int!
-  owner: Bytes!
-  challengeCounter: BigInt!
-  investorCounter: BigInt!
-  totalRewardUSD: BigDecimal!
-}
-
 type ChallengeSnapshot @entity(immutable: false) {
   id: ID!
   challengeId: String!
@@ -196,6 +182,22 @@ type ChallengeSnapshot @entity(immutable: false) {
   rewardAmountUSD: BigInt!
   topUsers: [Bytes!]!
   score: [BigInt!]!
+}
+
+type ActiveChallengesSnapshot @entity(immutable: false) {
+  id: ID!
+  totalParticipants: BigInt!
+  totalRewards: BigInt!
+  one_week_investorCounter: BigInt!
+  one_week_rewardAmountUSD: BigInt!
+  one_month_investorCounter: BigInt!
+  one_month_rewardAmountUSD: BigInt!
+  three_month_investorCounter: BigInt!
+  three_month_rewardAmountUSD: BigInt!
+  six_month_investorCounter: BigInt!
+  six_month_rewardAmountUSD: BigInt!
+  one_year_investorCounter: BigInt!
+  one_year_rewardAmountUSD: BigInt!
 }
 
 type InvestorSnapshot @entity(immutable: false) {

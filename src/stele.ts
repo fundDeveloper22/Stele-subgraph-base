@@ -24,8 +24,8 @@ import {
   InvestableToken,
   Stele,
   Challenge,
-  SteleSnapshot,
   ChallengeSnapshot,
+  ActiveChallengesSnapshot,
   Investor,
   ActiveChallenges,
   SteleTokenBonus,
@@ -35,7 +35,7 @@ import {
 import { BigInt, BigDecimal, Bytes, log, Address } from "@graphprotocol/graph-ts"
 import { ChallengeType, getDuration, STELE_ADDRESS } from "./utils/constants"
 import { ERC20 } from "../generated/Stele/ERC20"
-import { steleSnapshot, challengeSnapshot, investorSnapshot } from "./utils/snapshots"
+import { activeChallengesSnapshot, challengeSnapshot, investorSnapshot } from "./utils/snapshots"
 import { getCachedEthPriceUSD, getCachedTokenPriceETH, getTokenPriceETH } from "./utils/pricing"
 import { getInvestorID } from "./utils/investor"
 import { fetchTokenDecimals, fetchTokenSymbol } from "./utils/token"
@@ -59,7 +59,6 @@ export function handleSteleCreated(event: SteleCreatedEvent): void {
   stele.maxAssets = event.params.maxAssets
   stele.challengeCounter= BigInt.fromI32(0)
   stele.investorCounter = BigInt.fromI32(0)
-  stele.totalRewardUSD = BigDecimal.fromString("0")
   stele.save()
 
   let activeChallenges = new ActiveChallenges(Bytes.fromI32(0))
@@ -208,9 +207,6 @@ export function handleCreate(event: CreateEvent): void {
   stele.challengeCounter = stele.challengeCounter.plus(BigInt.fromI32(1))
   stele.save()
 
-  // Use the steleSnapshot helper function instead of duplicating logic
-  steleSnapshot(event)
-
   // Create challenge and challenge snapshot
   let challenge = new Challenge(
     event.params.challengeId.toString()
@@ -289,6 +285,7 @@ export function handleCreate(event: CreateEvent): void {
       break;
   }
   activeChallenges.save()
+  activeChallengesSnapshot(event)
 }
 
 export function handleJoin(event: JoinEvent): void {
@@ -301,7 +298,7 @@ export function handleJoin(event: JoinEvent): void {
   join.transactionHash = event.transaction.hash
   join.save()
 
-  // Update Stele and create SteleSnapshot
+  // Update Stele
   let stele = Stele.load(Bytes.fromI32(0))
   if (stele == null) {
     log.debug('[JOIN] Stele not found, Stele : {}', [STELE_ADDRESS])
@@ -309,7 +306,6 @@ export function handleJoin(event: JoinEvent): void {
   }
   stele.investorCounter = stele.investorCounter.plus(BigInt.fromI32(1))
   stele.save()
-  steleSnapshot(event)
 
   // Update Challenge and create ChallengeSnapshot
   let challenge = Challenge.load(event.params.challengeId.toString())
@@ -382,6 +378,7 @@ export function handleJoin(event: JoinEvent): void {
       break;
   }  
   activeChallenges.save()
+  activeChallengesSnapshot(event)
 }
 
 export function handleSwap(event: SwapEvent): void {

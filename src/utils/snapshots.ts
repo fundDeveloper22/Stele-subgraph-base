@@ -1,37 +1,15 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from '@graphprotocol/graph-ts'
 import {
   Stele,
-  SteleSnapshot,
   Challenge,
   ChallengeSnapshot,
+  ActiveChallengesSnapshot,
   Investor,
-  InvestorSnapshot
+  InvestorSnapshot,
+  ActiveChallenges
 } from '../../generated/schema'
 import { STELE_ADDRESS } from './constants'
 import { getInvestorID } from './investor'
-
-export function steleSnapshot(event: ethereum.Event): void {
-  let stele = Stele.load(Bytes.fromI32(0))
-  if (!stele) return 
-
-  let timestamp = event.block.timestamp.toI32()
-  let dayID = timestamp / 86400 // rounded
-  
-  let steleSnapshot = SteleSnapshot.load(dayID.toString())
-  if (steleSnapshot === null) {
-    steleSnapshot = new SteleSnapshot(dayID.toString())
-    steleSnapshot.date = dayID
-    steleSnapshot.rewardRatio = stele.rewardRatio
-    steleSnapshot.seedMoney = stele.seedMoney
-    steleSnapshot.entryFee = stele.entryFee
-    steleSnapshot.maxAssets = stele.maxAssets
-    steleSnapshot.owner = stele.owner
-    steleSnapshot.challengeCounter = stele.challengeCounter
-    steleSnapshot.investorCounter = stele.investorCounter
-    steleSnapshot.totalRewardUSD = stele.totalRewardUSD
-    steleSnapshot.save()
-  }
-}
 
 export function challengeSnapshot(
   challengeId: string,
@@ -54,6 +32,57 @@ export function challengeSnapshot(
     challengeSnapshot.score = challenge.score
     challengeSnapshot.save()
   }
+}
+
+export function activeChallengesSnapshot(event: ethereum.Event): void {
+  let activeChallenges = ActiveChallenges.load(Bytes.fromI32(0))
+  if (activeChallenges == null) {
+    return
+  }
+
+  let timestamp = event.block.timestamp.toI32()
+  let dayID = timestamp / 86400 // rounded
+
+  let activeChallengesSnapshot = ActiveChallengesSnapshot.load(dayID.toString())
+  if (activeChallengesSnapshot == null) {
+    activeChallengesSnapshot = new ActiveChallengesSnapshot(dayID.toString())
+  }
+
+  let one_week_investorCounter = activeChallenges.one_week_investorCounter
+  let one_week_rewardAmountUSD = activeChallenges.one_week_rewardAmountUSD
+  let one_month_investorCounter = activeChallenges.one_month_investorCounter
+  let one_month_rewardAmountUSD = activeChallenges.one_month_rewardAmountUSD
+  let three_month_investorCounter = activeChallenges.three_month_investorCounter
+  let three_month_rewardAmountUSD = activeChallenges.three_month_rewardAmountUSD
+  let six_month_investorCounter = activeChallenges.six_month_investorCounter
+  let six_month_rewardAmountUSD = activeChallenges.six_month_rewardAmountUSD
+  let one_year_investorCounter = activeChallenges.one_year_investorCounter
+  let one_year_rewardAmountUSD = activeChallenges.one_year_rewardAmountUSD
+
+  activeChallengesSnapshot.totalParticipants = 
+    one_week_investorCounter
+      .plus(one_month_investorCounter)
+      .plus(three_month_investorCounter)
+      .plus(six_month_investorCounter)
+      .plus(one_year_investorCounter)
+  activeChallengesSnapshot.totalRewards = 
+    one_week_rewardAmountUSD
+      .plus(one_month_rewardAmountUSD)
+      .plus(three_month_rewardAmountUSD)
+      .plus(six_month_rewardAmountUSD)
+      .plus(one_year_rewardAmountUSD)
+  
+  activeChallengesSnapshot.one_week_investorCounter = one_week_investorCounter
+  activeChallengesSnapshot.one_week_rewardAmountUSD = one_week_rewardAmountUSD
+  activeChallengesSnapshot.one_month_investorCounter = one_month_investorCounter
+  activeChallengesSnapshot.one_month_rewardAmountUSD = one_month_rewardAmountUSD
+  activeChallengesSnapshot.three_month_investorCounter = three_month_investorCounter
+  activeChallengesSnapshot.three_month_rewardAmountUSD = three_month_rewardAmountUSD
+  activeChallengesSnapshot.six_month_investorCounter = six_month_investorCounter
+  activeChallengesSnapshot.six_month_rewardAmountUSD = six_month_rewardAmountUSD
+  activeChallengesSnapshot.one_year_investorCounter = one_year_investorCounter
+  activeChallengesSnapshot.one_year_rewardAmountUSD = one_year_rewardAmountUSD
+  activeChallengesSnapshot.save()
 }
 
 export function investorSnapshot(
