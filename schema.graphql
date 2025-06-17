@@ -64,6 +64,7 @@ type Investor @entity(immutable: false) {
   id: ID!
   challengeId: String!
   createdAtTimestamp: BigInt!
+  endTime: BigInt!
   updatedAtTimestamp: BigInt!
   investor: Bytes!
   seedMoneyUSD: BigDecimal!
@@ -74,6 +75,7 @@ type Investor @entity(immutable: false) {
   tokensSymbols: [String!]!
   profitUSD: BigDecimal!
   profitRatio: BigDecimal!
+  isClosed: Boolean!
 }
 
 type InvestableToken @entity(immutable: false) {

@@ -24,14 +24,14 @@ export function challengeSnapshot(
   let challengeSnapshot = ChallengeSnapshot.load(challengeId + "-" + dayID.toString())
   if (challengeSnapshot == null) {
     challengeSnapshot = new ChallengeSnapshot(challengeId + "-" + dayID.toString())
-    challengeSnapshot.challengeId = challenge.challengeId
-    challengeSnapshot.timestamp = event.block.timestamp
-    challengeSnapshot.investorCount = challenge.investorCounter
-    challengeSnapshot.rewardAmountUSD = challenge.rewardAmountUSD
-    challengeSnapshot.topUsers = challenge.topUsers
-    challengeSnapshot.score = challenge.score
-    challengeSnapshot.save()
   }
+  challengeSnapshot.challengeId = challenge.challengeId
+  challengeSnapshot.timestamp = event.block.timestamp
+  challengeSnapshot.investorCount = challenge.investorCounter
+  challengeSnapshot.rewardAmountUSD = challenge.rewardAmountUSD
+  challengeSnapshot.topUsers = challenge.topUsers
+  challengeSnapshot.score = challenge.score
+  challengeSnapshot.save()
 }
 
 export function activeChallengesSnapshot(event: ethereum.Event): void {
@@ -98,9 +98,11 @@ export function investorSnapshot(
 
   let dayID = event.block.timestamp.toI32() / 86400 // rounded
 
-  const snapshotId = investorId + "-" + dayID.toString()
   // Always create new snapshot for each event
-  let investorSnapshot = new InvestorSnapshot(snapshotId)
+  let investorSnapshot = InvestorSnapshot.load(investorId + "-" + dayID.toString())
+  if (investorSnapshot == null) {
+    investorSnapshot = new InvestorSnapshot(investorId + "-" + dayID.toString())
+  }
   investorSnapshot.challengeId = investor.challengeId
   investorSnapshot.timestamp = event.block.timestamp
   investorSnapshot.investor = investor.investor

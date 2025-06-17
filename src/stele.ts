@@ -314,13 +314,16 @@ export function handleJoin(event: JoinEvent): void {
     return
   }
   challenge.investorCounter = challenge.investorCounter.plus(BigInt.fromI32(1))
+  challenge.rewardAmountUSD = challenge.rewardAmountUSD.plus(challenge.entryFee)
   challenge.save()
+
   challengeSnapshot(event.params.challengeId.toString(), event)
 
   // Create new Investor and InvestorSnapshot
   let investor = new Investor(getInvestorID(event.params.challengeId, event.params.user))
   investor.challengeId = event.params.challengeId.toString()
   investor.createdAtTimestamp = event.block.timestamp
+  investor.endTime = challenge.endTime
   investor.updatedAtTimestamp = event.block.timestamp
   investor.investor = event.params.user
   investor.seedMoneyUSD = BigDecimal.fromString(event.params.seedMoney.toString())
@@ -344,6 +347,7 @@ export function handleJoin(event: JoinEvent): void {
   // At join time, profit should be zero
   investor.profitUSD = BigDecimal.fromString("0")
   investor.profitRatio = BigDecimal.fromString("0")
+  investor.isClosed = false
   investor.save()
 
   investorSnapshot(event.params.challengeId, event.params.user, event)
@@ -608,6 +612,14 @@ export function handleRegister(event: RegisterEvent): void {
   register.transactionHash = event.transaction.hash
   register.save()
 
+  let investor = Investor.load(getInvestorID(event.params.challengeId, event.params.user))
+  if (investor == null) {
+    log.debug('[REGISTER] Investor not found, Investor : {}', [getInvestorID(event.params.challengeId, event.params.user)])
+    return
+  }
+  investor.isClosed = true
+  investor.save()
+  
   // Debug: Log the performance value from Register event
   log.info('[REGISTER DEBUG] Register event - User: {}, Performance: {}', [
     event.params.user.toHexString(),
