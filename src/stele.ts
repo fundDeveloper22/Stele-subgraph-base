@@ -619,7 +619,7 @@ export function handleRegister(event: RegisterEvent): void {
   }
   investor.isClosed = true
   investor.save()
-  
+
   // Debug: Log the performance value from Register event
   log.info('[REGISTER DEBUG] Register event - User: {}, Performance: {}', [
     event.params.user.toHexString(),
@@ -782,6 +782,8 @@ export function handleReward(event: RewardEvent): void {
     default:
       break;
   }
+  challenge.isActive = false
+  challenge.save()
   activeChallenges.save()
 }
 
